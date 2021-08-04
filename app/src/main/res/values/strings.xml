@@ -12,5 +12,6 @@
     <string name="v_transform">V-Transform</string>
     <string name="smart_enhance">Smart Enhance</string>
     <string name="segmentation">segmentation</string>
+    <string name="info">Info</string>
 
 </resources>

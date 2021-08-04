@@ -10,9 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -30,12 +28,12 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 
 import android.provider.MediaStore;
+import android.text.Html;
 import android.text.InputType;
 import android.util.Log;
 import android.view.View;
@@ -46,7 +44,7 @@ import android.widget.ImageView;
 import android.widget.NumberPicker;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends FragmentActivity {
 
@@ -59,13 +57,15 @@ public class MainActivity extends FragmentActivity {
 	private Button loadButton;
 	private Button improveButton;
 	private Button saveButton; // NEW: Save button calling saveImage(Bitmap, String) method
+	private Button infoButton; // NEW: Give info about segmentation
 	private RadioGroup radioGroup; //NEW: Radio buttons to allow user to choose enhancer.
 	private RadioButton radioButton; //NEW: Radio button selected
 	private static ImageEnhancer selectedEnhancer;
 	private static int selectedConfiguration;
 	private static ProgressDialog progressDialog;
-	private static TextView segmentationText; //NEW: Display segmentation values.
-	private String imageName; // NEW: Image name for the image being saved.
+	private static String imageName; // NEW: Image name for the image being saved.
+	private static int bestV, computed, chosen;
+	private boolean smart, transform = false;
 
 
 	@Override
@@ -83,10 +83,10 @@ public class MainActivity extends FragmentActivity {
 		loadButton = (Button) findViewById(R.id.load_button);
 		improveButton = (Button) findViewById(R.id.improve_button);
 		saveButton = (Button) findViewById(R.id.save_image); //NEW: get the save button
+		infoButton = (Button) findViewById(R.id.info_button); //NEW: get the info button
 		radioGroup = (RadioGroup) findViewById(R.id.enhanceMethods); //NEW: get the radio buttons
-		segmentationText = (TextView) findViewById(R.id.segmentation); //NEW: segmentation values
-		segmentationText.setVisibility(View.INVISIBLE);//NEW: make values invisible
 		improveButton.setVisibility(View.INVISIBLE);
+		infoButton.setVisibility(View.INVISIBLE); //NEW: Change visibility for info button.
 		saveButton.setVisibility(View.INVISIBLE); //NEW: Change visibility for save button.
 		radioGroup.setVisibility(View.INVISIBLE); //NEW: Change visibility for radio buttons.
 
@@ -110,23 +110,30 @@ public class MainActivity extends FragmentActivity {
 			}
 		});
 
-		//NEW: onClick event for save button. Checks if there is a image in the view
-		// else do nothing then calling the method saveImage()
+		infoButton.setOnClickListener(view -> {
+
+
+			if (smart && transform) {
+				Toast.makeText(MainActivity.this,"SEGMENTATION\n" + "Best: " + bestV, Toast.LENGTH_SHORT).show();
+			} else if (transform) {
+				Toast.makeText(MainActivity.this,"SEGMENTATION\n" + "Chosen: " + chosen + "\n" + "Actual: " + computed, Toast.LENGTH_SHORT).show();
+			} else {
+				Toast.makeText(MainActivity.this,"Nothing to display", Toast.LENGTH_SHORT).show();
+			}
+		});
+
+		//NEW: onClick event for save button. Opens the saveDialog() which will handle the saving
+		//procedure. If the current device does not support the Save function then a message will
+		//be displayed in the form of a Toast.
 		saveButton.setOnClickListener(view -> {
 
-			if (afterImageView.getDrawable() != null) {
+			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+
+				saveDialog();
 
 
-				Bitmap imageToSave = ((BitmapDrawable) afterImageView.getDrawable()).getBitmap();
-				inputDialog();
-
-				try {
-					saveImage(imageToSave, imageName);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
 			} else {
-				Log.d("DEBUG", "saveButton: onClick with no improved image");
+				Toast.makeText(MainActivity.this, Html.fromHtml("<font color='#da0037'>API on Device is <b>" + Build.VERSION.SDK_INT + "</b>, Save requires API <b>" + Build.VERSION_CODES.Q + "</b> or above.</font>") , Toast.LENGTH_LONG).show();
 			}
 
 		});
@@ -165,12 +172,12 @@ public class MainActivity extends FragmentActivity {
 					improveButton.setVisibility(View.INVISIBLE);
 					saveButton.setVisibility(View.INVISIBLE);
 					radioGroup.setVisibility(View.INVISIBLE);
-					segmentationText.setVisibility(View.INVISIBLE);
+					infoButton.setVisibility(View.INVISIBLE);
 				} else {
 					improveButton.setVisibility(View.VISIBLE);
 					saveButton.setVisibility(View.VISIBLE);
 					radioGroup.setVisibility(View.VISIBLE);
-					segmentationText.setVisibility(View.VISIBLE);
+					infoButton.setVisibility(View.VISIBLE);
 				}
 
 			}
@@ -211,7 +218,8 @@ public class MainActivity extends FragmentActivity {
 
 	/**
 	 * Method used to determine what Radio button is selected and from that display the
-	 * corresponding alert dialog and execute the image enhancing.
+	 * corresponding alert dialog and execute the image enhancing. Method also tells us how the Info
+	 * button will respond.
 	 * @param fm
 	 * @param name
 	 */
@@ -219,16 +227,22 @@ public class MainActivity extends FragmentActivity {
 		switch (name) {
 			case "Test Enhancer":
 				selectedEnhancer = getEnhancers().get(0);
+				transform = false;
+				smart = false;
 				new ConfigurationDialog().show(fm, "configuration_dialog");
 				break;
 			case "V-Transform":
 				selectedEnhancer = getEnhancers().get(1);
+				transform = true;
+				smart = false;
 				new VConfigurationDialog().show(fm, "vconfiguration_dialog");
 				break;
 			case "Smart Enhance":
 				selectedEnhancer = getEnhancers().get(2);
 				progressDialog.setProgress(0);
 				progressDialog.show();
+				transform = true;
+				smart = true;
 				new ImproveImageTask().execute(theImage);
 				break;
 		}
@@ -269,6 +283,7 @@ public class MainActivity extends FragmentActivity {
 				saveButton.setVisibility(View.VISIBLE);
 				radioGroup.setVisibility(View.VISIBLE);
 				improveButton.setVisibility(View.VISIBLE);
+				infoButton.setVisibility(View.VISIBLE);
 				loadButton.setVisibility(View.INVISIBLE);  //Hide the loadButton to not obscure the original pic.
 			} catch (FileNotFoundException e) {
 				// TODO Auto-generated catch block
@@ -401,36 +416,36 @@ public class MainActivity extends FragmentActivity {
 	}
 
 	/**
-	 * Updates the segmentation textView with details about what was chosen by the user and the
-	 * actual segmentation that the algorithm used for segments to be of equal size.
+	 * Updates the segmentation chosen with details about what was input by the user and the
+	 * computed segmentation that the algorithm used for segments to be of equal size.
 	 * @param input
 	 * @param actual
 	 */
 	@SuppressLint("SetTextI18n")
 	public static void updateSegmentTextV(int input, int actual){
-		segmentationText.setText("SEGMENTATION\n" + "Chosen: " + input + "\t" + "Actual: " + actual);
-		segmentationText.setVisibility(View.VISIBLE);
+		chosen = input;
+		computed = actual;
 	}
 
 	/**
-	 * Updates the segmentation textView with details about what the best number of segmentations was
+	 * Updates the segmentation bestV with details about what the best number of segmentations was
 	 * when Smart Enhance was used.
 	 * @param best
 	 */
 	@SuppressLint("SetTextI18n")
 	public static void updateSegmentTextSmartEnhance(int best){
-		segmentationText.setText("SEGMENTATION\n" + "Best: " + best);
-		segmentationText.setVisibility(View.VISIBLE);
+		bestV = best;
 	}
 
 	/**
-	 * inputDialog - method is used by saveButton and will prompt the user for input. The input in
+	 * saveDialog - method is used by saveButton and will prompt the user for input. The input in
 	 * the text field will be the name for the saved image. There is no need for any file extension
 	 * since this is handled by the "saveImage" method where it will always be a JPEG. This simplifies
 	 * the task of saving for the user and removes possible human errors such as writing incompatible
 	 * file extension, although there is now no flexibility for the user when wanting to save.
+	 * It will also give feedback to the User if there is nothing to save with a Toast.
 	 */
-	private void inputDialog() {
+	private void saveDialog() {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle("File name");
 		final EditText input = new EditText(this);
@@ -438,7 +453,18 @@ public class MainActivity extends FragmentActivity {
 		builder.setView(input);
 
 		builder.setPositiveButton("OK", (dialog, i) -> {
-			imageName = input.getText().toString();
+			if (afterImageView.getDrawable() != null) {
+				try {
+
+					Bitmap imageToSave = ((BitmapDrawable) afterImageView.getDrawable()).getBitmap();
+					saveImage(imageToSave, input.getText().toString());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			} else {
+				Toast.makeText(MainActivity.this, "Nothing to Save" , Toast.LENGTH_SHORT).show();
+				Log.d("DEBUG", "saveButton: onClick with no improved image");
+			}
 		});
 
 		builder.setNegativeButton("Cancel", (dialog,i) -> {
