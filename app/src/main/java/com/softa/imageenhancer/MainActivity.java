@@ -63,9 +63,8 @@ public class MainActivity extends FragmentActivity {
 	private static ImageEnhancer selectedEnhancer;
 	private static int selectedConfiguration;
 	private static ProgressDialog progressDialog;
-	private static String imageName; // NEW: Image name for the image being saved.
-	private static int bestV, computed, chosen;
-	private boolean smart, transform = false;
+	private static int bestV, computed, chosen; //NEW: Handles the segmentation data.
+	private boolean smart, transform = false; //NEW: Handles what INFO button displays.
 
 
 	@Override
