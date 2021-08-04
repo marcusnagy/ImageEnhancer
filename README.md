@@ -13,15 +13,15 @@ At load-up there is one button available named **Load new image**, this button a
  `Smart Enhance` - Choose this to enhance the image in a smart way, where the best value in *Median Absolute Deviation* for different segmentation values of the V-Transform will be returned.
  - **Modify Image**: This button on click might prompt the user for more input data, depending on what enhancer is selected from the *Radio Group*. Once the enhancing is executing there will be a `progressDialog` displayed giving feedback for the progress.
  - **Save**: Button will prompt the user for text input that will require the *name* for the enhanced image being saved to *pictures* on the device.
- > **Note:** The button **Save** might only work properly on API 29 or above, and will only execute if there is an enhanced image in `afterImageView`.
+ > **Note:** The button **Save** might only work properly on API 29 or above, and will display a `Toast` if you're not able to use the function.
+ - **Info**: Button will display informative information about segmentation by creating a `Toast`. If no method using segmentation is used a message saying "Nothing to display" will show.
+ > **Note:** This information can be modified to display other things for other image enhancing methods.
 
-To **Hide/Show** the options, segmentation info and buttons in the bottom "tap" the `afterImageView`.
+To **Hide/Show** the options and buttons in the bottom "tap" the `afterImageView`.
 
 To **Hide/Show** the *Load new image* button '"tap" the `beforeImageView`
 
->**Note:** Using either *V-Transform* or *Smart Enhance* will make a `textView` appear showing what the user selected for *number of segments* and the *actual number of segments* calculated by the algorithm, which finds the closest factor to the desired input; respectively *Smart Enhance* will display the best number of segments.
->
->To display the segmentation info API 30 or above is **required**.
+>**Note:** Using any of the available image enhancing methods  will make a `Toast` appear when *Info* is clicked, displaying information according to the function selected. When `V-Transform` is selected *number of segments* and the *actual number of segments* calculated by the algorithm will be displayed as "Chosen:" and "Actual:", which finds the closest factor to the selected number of segments; `Smart Enhance` will display the best number of segments. Lastly if nothing has been explicitly modified and any other image enhancing method is selected the *Info* button when clicked will tell us "Nothing to display" 
 
 # Version changes
 
@@ -36,4 +36,11 @@ There is a couple new classes to allow for *V-transform* and *Smart Enhance*.
 - ***TemplateEnhancer:*** Abstract class that contains logic/methods which both of the *V-Transform* and the *Smart Enhance* uses. Implements `ImageEnhancer` and is constructed after `Template method Pattern` to be a *template* for both *V-Transform* and *Smart Enhance*.
 - **VEnhancer:** Class extends `TemplateEnhancer` and performs the *V-Transform* on a given image with specified number of segments.
 - **SmartVEnhancer:** Class extends `TemplateEnhancer` and performs the *V-Transform* on all possible factors but returns the image which produces the best *Median Absolute Deviation* value (which is the value closest to 0.25)
+
+## Changes from Feedback
+There have been some minor changes to improve layout for multiple devices by adding an **Info** button and removing a `textField`. This allows for older APIs to be used. **Save** button now works properly but also with improved feedback to the user.
+
+>**Note:** Changes are visible in How-to-Use and everything old has been removed.
+
+
 
