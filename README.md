@@ -11,6 +11,7 @@ At load-up there is one button available named **Load new image**, this button a
  `Test Enhancer` - Choose this to prompt for 4 different actions of image enhancing. 
  `V-Transform` - Choose this for using the V-Transform to enhance the image; when selected and click on button *Modify image* the user will be prompted for selecting number of segments. 
  `Smart Enhance` - Choose this to enhance the image in a smart way, where the best value in *Median Absolute Deviation* for different segmentation values of the V-Transform will be returned.
+ >**Note:** `Smart Enhance` *requires* substantial computing power and could slow down your device, recommended to be used on newer devices only.
  - **Modify Image**: This button on click might prompt the user for more input data, depending on what enhancer is selected from the *Radio Group*. Once the enhancing is executing there will be a `progressDialog` displayed giving feedback for the progress.
  - **Save**: Button will prompt the user for text input that will require the *name* for the enhanced image being saved to *pictures* on the device.
  > **Note:** The button **Save** might only work properly on API 29 or above, and will display a `Toast` if you're not able to use the function.
